@@ -1,0 +1,42 @@
+{% extends "nav.html" %}
+{% block nav_tasks %}active{% endblock %}
+{% block content %}
+{{ super() }}
+
+<div id="wk-main" class="wk-main-tasks">
+
+    <span id="all-tasks-button">All tasks</span>
+    <div class="task-row">
+        <div id="task-list-wrapper">
+            <div id="task-list-wrapper-label">Task List</div>
+            {% for task_i in workflow.tasks %}
+            {% if task.task_idx == task_i.task_idx %}
+            {% set task_active_class = 'task-active' %}
+            {% else %}
+            {% set task_active_class = 'task-inactive' %}
+            {% endif %}
+            <div class='task-wrapper {{ task_active_class }}' data-task-idx="{{ task_i.task_idx }}" data-wid="{{ id }}">
+                <div class="task-brief-info">
+                    <div><span class="task-brief-info-name">{{ task_i.name_friendly }}</span></div>
+                    <div class="task-brief-info-item"><span
+                            class="task-brief-info-label">Method:</span>{{ task_i.schema.method }}</div>
+                    <div class="task-brief-info-item"><span
+                            class="task-brief-info-label">Software:</span>{{ task_i.schema.implementation }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="task-inspector">
+            {% include 'task.html' %}
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}
+
+<!-- https://jsfiddle.net/oy2nfamk/4/ -->
+<!-- https://jsfiddle.net/pohzseqf/3/ -->
+<!-- https://jsfiddle.net/65c2a9xm/10/ -->

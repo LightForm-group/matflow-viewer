@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+{% block content %}
+{% if repo_name %}
+<div class="remote-load">
+    Load workflow from GitHub repository <a href="http://github.com/{{ repo_name }}">{{ repo_name }}</a>:
+    <ul>
+        {% for wk in workflow_paths %}
+        {% set escaped_path = wk | replace('/', '%2F') %}
+        <li><a href="{{ url_for('get_remote_workflow', path=escaped_path) }}">{{ wk }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+{% else %}
+<div class="load-form">
+    <form action="/get_local_workflow" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" />
+        <input type="submit" value="Load" />
+    </form>
+</div>
+{% endif %}
+{% endblock %}

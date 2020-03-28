@@ -1,0 +1,4 @@
+{% set param_name_friendly = param_name | replace('_', ' ') %}
+<span class="task-param-name" data-wid="{{ id }}" data-task-idx="{{ task.task_idx }}"
+    data-element-idx="{{ element_idx }}" data-param-name="{{ param_name }}"
+    data-param-type="{{ param_type }}">{{ param_name_friendly }}</span>

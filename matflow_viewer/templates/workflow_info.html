@@ -1,0 +1,27 @@
+{% extends "nav.html" %}
+{% block nav_info %}active{% endblock %}
+{% block content %}
+{{ super() }}
+<div id="wk-main">
+    <table class="table workflow-info table-bordered">
+        <tbody>
+            <tr>
+                <th scope="row">Name</th>
+                <td>{{ workflow.human_name }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Date</th>
+                <td>{{ workflow.human_id }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Machine</th>
+                <td>CSF</td>
+            </tr>
+            <tr>
+                <th scope="row">Execution directory</th>
+                <td>{{ workflow.stage_directory }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

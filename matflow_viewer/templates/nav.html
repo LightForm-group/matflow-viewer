@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div id="wk-nav">
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link {% block nav_profile %}{% endblock %}"
+                href="{{ url_for('workflow_profile', id=id) }}">Profile</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% block nav_info %}{% endblock %}" href="{{ url_for('workflow_info', id=id) }}">Info</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% block nav_tasks %}{% endblock %}"
+                href="{{ url_for('workflow_tasks', id=id) }}">Tasks</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% block nav_figures %}{% endblock %}" href="{{ url_for('workflow_figures', id=id) }}"
+                tabindex="-1" aria-disabled="true">Figures</a>
+        </li>
+    </ul>
+</div>
+
+{% endblock %}

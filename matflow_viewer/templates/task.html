@@ -1,0 +1,103 @@
+{% block task_block %}
+
+<h3>Task: {{ task.name_friendly }}</h3>
+<div class="task-info-items-wrap">
+    <div class="task-info-item">
+        <div class="task-info-label">Element:</div>
+        <div class="task-info-value">
+            <span class="element-selector">
+                {% for elem in task.inputs -%}
+                {% if loop.index0 == element_idx %}
+                {% set active_class = ' active' %}
+                {% else %}
+                {% set active_class = '' %}
+                {% endif %}
+                <span class="task-element-button{{ active_class }}" data-wid="{{ id }}"
+                    data-task-idx="{{ task.task_idx }}" data-element-idx="{{ loop.index0 }}">{{ loop.index }}</span>
+                {%- endfor %}</span>
+        </div>
+    </div>
+    <div class="task-info-item">
+        <div class="task-info-label">Inputs:</div>
+        <div class="task-info-value">
+            {% set param_type = 'input' %}
+            {% for param_name in task.schema.inputs | sort %}
+            {% include 'param_button.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="task-info-item">
+        <div class="task-info-label">Input maps:</div>
+        <div class="task-info-value">
+            {% for in_map in task.schema.input_map %}
+            <div class="task-input-map">
+                <div class="task-input-map-inputs-list">
+                    {% set param_type = 'input' %}
+                    {% for param_name in in_map.inputs | sort %}{% include 'param_button.html' %}{% endfor %}</div>
+                <span
+                    class="inout-map-arrow">➞</span>{% set file_name = in_map.file %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class='task-info-item'>
+        <div class="task-info-label">Commands:</div>
+        <div class="task-info-value">
+            <pre>{% for cmd in commands %}<div class="cmd">{{ cmd }}</div>{% endfor %}</pre>
+        </div>
+    </div>
+
+
+    <div class="task-info-item">
+        <div class="task-info-label">Output maps:</div>
+        <div class="task-info-value">
+            {% for out_map in task.schema.output_map %}
+            <div class="task-output-map">
+                <div class="task-output-map-files-list">
+                    {% for file_name in out_map.files | sort %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+                </div>
+                <span
+                    class="inout-map-arrow">➞</span>{% set param_name = out_map.output %}{% set param_type = 'output' %}{% include 'param_button.html' %}{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="task-info-item">
+        <div class="task-info-label">Outputs:</div>
+        <div class="task-info-value">
+            {% set param_type = 'output' %}
+            {% for param_name in task.schema.outputs | sort %}
+            {% if param_name.startswith('__file__') %}
+            {% set file_name = param_name.split('__file__')[1] %}
+            {% set file_location = 'outputs' %}
+            {% include 'file_button.html' %}
+            {% else %}
+            {% include 'param_button.html' %}
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="task-info-item">
+        <div class="task-info-label">Duration:</div>
+        <div class="task-info-value">{{ task.resource_usage[element_idx].duration }}</div>
+    </div>
+    {% if task.resource_usage[element_idx].hostname %}
+    <div class="task-info-item">
+        <div class="task-info-label">Resource use:</div>
+        <div class="task-info-value">
+            <div class="resource-usage-wrapper">
+                <div class="resource-usage-item-label">Hostname </div>
+                <div class="resource-usage-item-value">{{ task.resource_usage[element_idx].hostname }}</div>
+            </div>
+            <div class="resource-usage-wrapper">
+                <div class="resource-usage-item-label">Wall clock </div>
+                <div class="resource-usage-item-value">{{ task.resource_usage[element_idx].wallclock }} s</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<div id="param-wrapper"></div>
+</div>
+{% endblock %}
