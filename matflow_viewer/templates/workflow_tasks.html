@@ -3,7 +3,7 @@
 {% block content %}
 {{ super() }}
 
-<div id="wk-main" class="wk-main-tasks">
+<div id="wk-main" class="wk-main-tasks" data-workflow-id="{{ id }}">
 
     <span id="all-tasks-button">All tasks</span>
     <div class="task-row">
@@ -13,7 +13,7 @@
             {% if task.task_idx == task_i.task_idx %}
             {% set task_active_class = 'task-active' %}
             {% else %}
-            {% set task_active_class = 'task-inactive' %}
+            {% set task_active_class = '' %}
             {% endif %}
             <div class='task-wrapper {{ task_active_class }}' data-task-idx="{{ task_i.task_idx }}" data-wid="{{ id }}">
                 <div class="task-brief-info">
@@ -26,8 +26,12 @@
             </div>
             {% endfor %}
         </div>
-        <div class="task-inspector">
-            {% include 'task.html' %}
+        <div class="task-inspector-wrapper">
+            <div id="task-inspector-overlay"></div>
+            <div class="task-inspector" data-original-task-idx="{{ task.task_idx }}"
+                data-original-workflow-id="{{ id }}" data-original-element-idx="{{ element_idx }}">
+                {% include 'task_full.html' %}
+            </div>
         </div>
     </div>
 

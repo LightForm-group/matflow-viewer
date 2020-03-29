@@ -1,3 +1,10 @@
-<span class="task-file-name" data-wid="{{ id }}" data-task-idx="{{ task.task_idx }}"
+{% set file_name_url_friendly = file_name | replace('.', '_') %}
+{% if file_name_url_friendly == active_file_name %}
+{% set active_class = ' param-name-active' %}
+{% else %}
+{% set active_class = '' %}
+{% endif %}
+<span class="task-param-name task-file-name{{ active_class }}" data-param-type="file"
+    data-param-name="{{ file_name_url_friendly }}" data-wid="{{ id }}" data-task-idx="{{ task.task_idx }}"
     data-element-idx="{{ element_idx }}" data-file-name="{{ file_name }}"
     data-file-location="{{ file_location }}">{{ file_name }}</span>

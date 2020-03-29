@@ -1,81 +1,5 @@
 $(document).ready(function () {
 
-    $('.task-inspector').on('click', '.task-param-name', function (event) {
-
-        var param_name = $(this).data('param-name');
-        var param_type = $(this).data('param-type');
-        var elems = $('.task-param-name[data-param-name="' + param_name + '"]');
-        var other_elems = $('.task-file-name');
-
-        if ($(this).hasClass('active')) {
-            $('#param-wrapper').html('');
-            elems.removeClass('active');
-        }
-        else {
-            var task_idx = $(this).data('task-idx');
-            var wid = $(this).data('wid');
-            var element_idx = $(this).data('element-idx');
-            $.ajax({
-                type: 'POST',
-                url: '/get_param',
-                data: {
-                    "wid": wid,
-                    "task_idx": task_idx,
-                    "element_idx": element_idx,
-                    "param_name": param_name,
-                    "param_type": param_type,
-                },
-                success: function (response) {
-                    $('#param-wrapper').html(response);
-                    $('.task-param-name.active').removeClass('active');
-                    elems.addClass('active');
-                    other_elems.removeClass('active');
-                },
-                error: function (error) {
-                    console.log(error);
-                }
-            });
-        }
-    });
-
-    $('.task-inspector').on('click', '.task-file-name', function (event) {
-
-        var file_name = $(this).data('file-name');
-        var elems = $('.task-file-name[data-file-name="' + file_name + '"]');
-        var other_elems = $('.task-param-name');
-
-        if ($(this).hasClass('active')) {
-            $('#param-wrapper').html('');
-            elems.removeClass('active');
-        }
-        else {
-            var task_idx = $(this).data('task-idx');
-            var wid = $(this).data('wid');
-            var element_idx = $(this).data('element-idx');
-            var file_location = $(this).data('file-location');
-            $.ajax({
-                type: 'POST',
-                url: '/get_file',
-                data: {
-                    "wid": wid,
-                    "task_idx": task_idx,
-                    "element_idx": element_idx,
-                    "file_name": file_name,
-                    "file_location": file_location,
-                },
-                success: function (response) {
-                    $('#param-wrapper').html(response);
-                    $('.task-file-name.active').removeClass('active');
-                    elems.addClass('active');
-                    other_elems.removeClass('active');
-                },
-                error: function (error) {
-                    console.log(error);
-                }
-            });
-        }
-    });
-
     $(document).click(function (evt) {
 
         if (evt.target.id == "all-tasks-button") {
@@ -93,52 +17,218 @@ $(document).ready(function () {
         };
     });
 
+    // Handle clicking to change task:
     $('.task-wrapper').click(function (evt) {
-        var task_idx = $(this).data('task-idx');
-        var wid = $(this).data('wid');
-        var elem = $(this);
+        var workflowID = $(this).data('wid');
+        var taskIdx = $(this).data("task-idx");
+        var data = {
+            "workflowID": workflowID,
+            "taskIdx": taskIdx,
+            "elementIdx": 0,
+            "inputName": null,
+            "outputName": null,
+            "fileName": null,
+        };
+        var newURL = "/workflow/" + workflowID + "/task/" + taskIdx + "/element/0"
+        changeTask(data);
+        history.pushState(data, "", newURL);
+    });
+
+    // Handle clicking to change input/output/file parameter:
+    $('.task-inspector').on('click', '.task-param-name', function (event) {
+
+        var paramType = $(this).data('param-type');
+        var paramName = $(this).data('param-name');
+        var workflowID = $(this).data('wid');
+        var taskIdx = $(this).data("task-idx");
+        var elementIdx = $('.task-element-button.element-button-active').data("element-idx");
+
+        if ($(this).hasClass('param-name-active')) {
+            var data = {
+                "workflowID": workflowID,
+                "taskIdx": taskIdx,
+                "elementIdx": 0,
+                "inputName": null,
+                "outputName": null,
+                "fileName": null,
+            };
+            var newURL = "/workflow/" + workflowID + "/task/" + taskIdx + "/element/" + elementIdx + "/";
+            $('.task-param-name[data-param-name="' + paramName + '"]').removeClass('param-name-active');
+        } else {
+            var data = {
+                "workflowID": workflowID,
+                "taskIdx": taskIdx,
+                "elementIdx": 0,
+                "inputName": $(this).data('param-type') == 'input' ? $(this).data('param-name') : null,
+                "outputName": $(this).data('param-type') == 'output' ? $(this).data('param-name') : null,
+                "fileName": $(this).data('param-type') == 'file' ? $(this).data('param-name') : null,
+            };
+            var newURL = "/workflow/" + workflowID + "/task/" + taskIdx + "/element/" + elementIdx + "/" + paramType + "/" + paramName + "/";
+            $('.task-param-name').removeClass('param-name-active');
+            $('.task-param-name[data-param-name="' + paramName + '"]').addClass('param-name-active');
+        }
+        changeParameter(data);
+        history.pushState(data, "", newURL);
+    });
+
+    // Handle clicking to change element:
+    $('.task-row').on('click', '.task-element-button', function (evt) {
+        var workflowID = $(this).data('wid');
+        var taskIdx = $(this).data('task-idx');
+        var elementIdx = $(this).data('element-idx');
+
+        var param_name = $('.param-wrapper.param-active').data("param-name");
+        var param_type = $('.param-wrapper.param-active').data("param-type");
+        var inputName = null;
+        var outputName = null;
+        var fileName = null;
+        if (param_type == 'input') {
+            inputName = param_name
+        } else if (param_type == 'output') {
+            outputName = param_name
+        } else if (param_type == 'file') {
+            fileName = param_name
+        }
+
+        var data = {
+            "workflowID": workflowID,
+            "taskIdx": taskIdx,
+            "elementIdx": elementIdx,
+            "inputName": inputName,
+            "outputName": outputName,
+            "fileName": fileName,
+        };
+        var newURL = "/workflow/" + workflowID + "/task/" + taskIdx + "/element/" + elementIdx;
+        if (param_type) {
+            var newURL = newURL + "/" + param_type + "/" + param_name;
+        }
+        changeElement(data);
+        history.pushState(data, "", newURL);
+    });
+
+
+    function updateTask(state) {
+        // Compare state.taskIdx, state.elementIdx and state.input/output/fileName, to
+        // see what we need to change:
+        var currentTaskIdx = $('.task-wrapper.task-active').data("task-idx");
+        var currentElementIdx = $('.task-element-button.element-button-active').data("element-idx");
+
+        var param_name = $('.param-wrapper.param-active').data("param-name");
+        var param_type = $('.param-wrapper.param-active').data("param-type");
+        var currentInputName = null;
+        var currentOutputName = null;
+        var currentFileName = null;
+        if (param_type == 'input') {
+            currentInputName = param_name;
+        } else if (param_type == 'output') {
+            currentOutputName = param_name;
+        } else if (param_type == 'file') {
+            currentFileName = param_name;
+        }
+
+        if (currentTaskIdx != state.taskIdx) {
+            console.log("need to change task; sending state: " + state);
+            changeTask(state);
+        } else if (currentElementIdx != state.elementIdx) {
+            console.log("Need to change element; sending state: " + state);
+            changeElement(state);
+        } else {
+            if (currentInputName != state.inputName) {
+                console.log("need to change input; sending state: " + state);
+            } else if (currentOutputName != state.outputName) {
+                console.log("need to change output; sending state: " + state);
+            } else if (currentFileName != state.fileName) {
+                console.log("need to change file; sending state: " + state);
+            }
+            changeParameter(state);
+        }
+
+    }
+
+    function changeElement(state) {
+
+        var elementIdx = state.elementIdx;
+        $('.task-element-button.element-button-active').removeClass('element-button-active');
+        $('.task-element-button[data-element-idx=' + elementIdx + ']').addClass('element-button-active');
+
+        $('.task-param-inspector.element-param-active').removeClass('element-param-active');
+        $('.task-param-inspector[data-element-idx=' + elementIdx + ']').addClass('element-param-active');
+
+        $('.task-duration.task-duration-active').removeClass('task-duration-active');
+        $('.task-duration[data-element-idx="' + elementIdx + '"').addClass('task-duration-active');
+
+        $('.task-resource-use.task-resource-use-active').removeClass('task-resource-use-active');
+        $('.task-resource-use[data-element-idx="' + elementIdx + '"').addClass('task-resource-use-active');
+    }
+
+    function changeParameter(state) {
+        $('.param-wrapper.param-active').removeClass('param-active');
+        var paramName = state.inputName || state.outputName || state.fileName
+        if (paramName) {
+            $('.param-wrapper[data-param-name="' + paramName + '"]').addClass('param-active');
+        }
+
+
+    }
+
+    function changeTask(state) {
+
+        var workflowID = state.workflowID;
+        var taskIdx = state.taskIdx;
+        var elementIdx = state.elementIdx;
+
+        $('#task-inspector-overlay').addClass('loading');
         $.ajax({
             type: 'POST',
-            url: '/get_task',
+            url: '/get_full_task',
             data: {
-                "wid": wid,
-                "task_idx": task_idx,
-                "element_idx": 0,
+                "workflowID": workflowID,
+                "taskIdx": taskIdx,
+                "elementIdx": elementIdx,
             },
             success: function (response) {
+                console.log("success!")
                 $('.task-inspector').html(response);
-                $('.task-wrapper.task-active').removeClass('task-active').addClass('task-inactive');
-                elem.removeClass('task-inactive');
-                elem.addClass('task-active');
+                $('.task-wrapper.task-active').removeClass('task-active');
+                $('.task-wrapper[data-task-idx=' + taskIdx + ']').addClass('task-active');
             },
             error: function (error) {
                 console.log(error);
+            },
+            complete: function (data) {
+                $('#task-inspector-overlay').removeClass('loading');
             }
         })
         if ($('#task-list-wrapper').hasClass('my-modal')) {
             $('#task-list-wrapper').removeClass('my-modal');
         };
+    }
+
+    $(window).on("popstate", function (event) {
+        originalState = event.originalEvent.state;
+        updateTask(originalState);
     });
 
-    $('.task-row').on('click', '.task-element-button', function (evt) {
-        var task_idx = $(this).data('task-idx');
-        var wid = $(this).data('wid');
-        var element_idx = $(this).data('element-idx')
-        $.ajax({
-            type: 'POST',
-            url: '/get_task',
-            data: {
-                "wid": wid,
-                "task_idx": task_idx,
-                "element_idx": element_idx,
-            },
-            success: function (response) {
-                $('.task-inspector').html(response);
-            },
-            error: function (error) {
-                console.log(error);
-            }
-        })
-    });
+    // Store initial state so it can be re-visited:
+    var param_name = $('.param-wrapper.param-active').data("param-name");
+    var param_type = $('.param-wrapper.param-active').data("param-type");
+    var inputName = null;
+    var outputName = null;
+    var fileName = null;
+    if (param_type == 'input') {
+        inputName = param_name
+    } else if (param_type == 'output') {
+        outputName = param_name
+    } else if (param_type == 'file') {
+        fileName = param_name
+    }
+    history.replaceState({
+        "workflowID": $('#wk-main').data('workflow-id'),
+        "taskIdx": $('.task-wrapper.task-active').data("task-idx"),
+        "elementIdx": $('.task-element-button.element-button-active').data("element-idx"),
+        "inputName": inputName,
+        "outputName": outputName,
+        "fileName": fileName,
+    }, document.title, document.location.href);
 
 });

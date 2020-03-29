@@ -40,14 +40,6 @@ div.load-form, div.remote-load {
     margin-bottom: 0;
 }
 
-
-
-
-
-
-
-
-
 .task th {
     font-weight: normal;
     font-style: italic;
@@ -67,19 +59,27 @@ a.task-link, a.task-link:hover {
 span.task-element-button {
     border: 1px solid silver;
     display:inline-block;
-    padding: 0.1em 0.6em;
-}
-
-span.task-element-button.active {
-    background-color: #efefef;
-    font-weight: 600;
-}
-
-.task-input-map {
+    padding: 0.3em 0.8em;
     margin: 0.4em 0;
+    font-family: monospace;
+    font-size: 1.3em;
+}
+span.task-element-button:hover {
+    background-color: #efefef;
+    cursor: pointer;
 }
 
-.task-file-name, .task-param-name {
+span.task-element-button.element-button-active {
+    background-color: #ccc;
+}
+
+.task-input-map, .task-output-map {
+    margin: 0.4em 0;
+    position: relative;
+    z-index: 0;    
+}
+
+.task-param-name {
     display: inline-flex;
     align-items: center;    
     margin: 0.1em;    
@@ -88,21 +88,21 @@ span.task-element-button.active {
     color: initial;
     white-space: nowrap; 
 }
-.task-file-name:hover, .task-param-name:hover {
+.task-param-name.task-file-name:hover, .task-param-name:hover {
     text-decoration: underline;
     cursor: pointer;
 }
 
-.task-file-name {
+.task-param-name.task-file-name {
     background-color: rgb(137, 178, 240);
 }
-.task-file-name.active {
+.task-param-name.task-file-name.param-name-active {
     background-color: rgb(85, 145, 235);
 }
 .task-param-name {    
     background-color: #c2dbc4; 
 }
-.task-param-name.active {
+.task-param-name.param-name-active {
     background-color: #72a376;
 }
 .task-param-name:hover {
@@ -121,6 +121,7 @@ span.task-element-button.active {
     margin: 0 0.5em;
     transform: scale(1.7);
     color: #666;
+    z-index: 0;
 }
 
 
@@ -143,17 +144,38 @@ span.task-element-button.active {
 .task-info-value {
     overflow-x: auto;
 }
-/* ul.task-info-command-group {
-    padding-left: 0;
-    overflow-x: auto;
-  }
-ul.task-info-command-group > li {
-    list-style-type: none;
-    padding: 0.2em 0;
-} */
 
-#param-wrapper {
+.task-duration {
+    display: none;
+}
+.task-duration.task-duration-active {
+    display: block;
+}
+.task-resource-use {
+    display: none;        
+}
+.task-resource-use.task-resource-use-active {
+    display: block;
+}
+
+#param-inspector {
     margin-top: 1em;
+}
+.param-wrapper {
+    /* border: 1px solid blue; */
+}
+.param-wrapper {
+    display: none;
+}
+.param-wrapper.param-active {
+    display: block;
+}
+.task-param-inspector {
+    display: none;
+    /* border: 1px solid green; */
+}
+.task-param-inspector.element-param-active {
+    display: block;
 }
 
 table.ndarray {
@@ -170,12 +192,9 @@ table.ndarray .inner.ndarray {
 }
 
 table.param-dict {
-    border: 1px solid green;
+    /* border: 1px solid green; */
 
 }
-
-
-
 
 td.param-dict {
     border: 1px solid gray;
@@ -206,8 +225,6 @@ div.highlight>pre {
 div.cmd {
     padding: 0.2em 0;
 }
-
-
 
 .task-brief-info-item {
     color: #999;
@@ -256,6 +273,7 @@ div.cmd {
 #task-list-wrapper {
     display:none;    
     /* background-color: #f7f7f7; */    
+    z-index: 100;
 }
 #task-list-wrapper-label {
     background-color: #f7f7f7;
@@ -265,7 +283,25 @@ div.cmd {
 }
 .task-inspector {
     /* border: 1px solid green;    */
+}
+.task-inspector-wrapper {
+    /* border: 1px solid green;    */
     padding: 1em 2em;
+    position: relative;
+}
+#task-inspector-overlay.loading {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;    
+    z-index: 10;    
+    opacity: 0.8;
+    background-color: #fff;
+}
+#task-inspector-overlay {
+    position: relative;    
+
 }
 .task-inspector h3, .task-inspector h4 {
     text-decoration: underline;
@@ -316,18 +352,11 @@ div.cmd {
         width: initial;
     }
 
-    .task-inspector {
+    .task-inspector-wrapper {
         overflow-x: auto;
         flex-grow: 1;
     }  
 }
-
-
-
-
-
-
-
 
 @media (min-width: 40em) { 
     .task-info-item {

@@ -2,7 +2,7 @@
 {% block nav_profile %}active{% endblock %}
 {% block content %}
 {{ super() }}
-<div id="wk-main">
+<div id="wk-main" data-workflow-id="{{ id }}">
     {% highlight 'yaml' %}{{ workflow.profile_str }}{% endhighlight %}
 </div>
 

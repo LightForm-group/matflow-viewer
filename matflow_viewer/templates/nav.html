@@ -13,7 +13,7 @@
         </li>
         <li class="nav-item">
             <a class="nav-link {% block nav_tasks %}{% endblock %}"
-                href="{{ url_for('workflow_tasks', id=id) }}">Tasks</a>
+                href="{{ url_for('workflow_tasks', id=id, task_idx=0, element_idx=0) }}">Tasks</a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% block nav_figures %}{% endblock %}" href="{{ url_for('workflow_figures', id=id) }}"

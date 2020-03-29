@@ -6,8 +6,11 @@ import requests
 from pathlib import Path
 import json
 from pprint import pprint, pformat
+from datetime import datetime, timedelta
+import copy
 
 import numpy as np
+from hpcflow.utils import format_time_delta
 
 from github import Github
 import jinja2_highlight
@@ -112,27 +115,127 @@ def workflow_info(id):
     return render_template('workflow_info.html', id=id, workflow=wk)
 
 
-@app.route('/workflow/<id>/task')
-def workflow_tasks(id):
+@app.route('/workflow/<id>/task/')
+@app.route('/workflow/<id>/task/<int:task_idx>/')
+@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/')
+@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/input/<active_input_name>/')
+@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/output/<active_output_name>/')
+@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/file/<active_file_name>/')
+def workflow_tasks(id, task_idx=0, element_idx=0, active_input_name=None,
+                   active_output_name=None, active_file_name=None):
     wk = find_workflow(id=id)
-    task = wk.tasks[0]
-    cg = task.schema.command_group
-    cg_fmt = cg.get_formatted_commands([])[0]
+    task = wk.tasks[task_idx]
     page = render_template(
         'workflow_tasks.html',
         id=id,
         workflow=wk,
         task=task,
-        element_idx=0,
-        commands=cg_fmt,
+        element_idx=int(element_idx),
+        active_input_name=active_input_name,
+        active_output_name=active_output_name,
+        active_file_name=active_file_name,
+        **get_task_arguments(task),
+        resource_use=format_task_resources(task),
     )
     return page
+
+
+def format_task_resources(task):
+    res_use = []
+    for i in task.resource_usage:
+
+        i = copy.deepcopy(i)
+        # dt_fmt = r'%Y.%m.%d %H:%M:%S'
+        td = timedelta(**i['duration'])
+        i['duration'] = format_time_delta(td)
+
+        res_use.append(i)
+
+    return res_use
 
 
 @app.route('/workflow/<id>/figures')
 def workflow_figures(id):
     wk = find_workflow(id=id)
     return render_template('workflow_figures.html', id=id, workflow=wk)
+
+
+def get_task_arguments(task):
+    cg_fmt = task.schema.command_group.get_formatted_commands([])[0]
+    formatted_parameters = {
+        'inputs': {},
+        'outputs': {},
+        'files': {},
+    }
+    for input_elem in task.inputs:
+        for input_name, input_val in input_elem.items():
+            if input_name.startswith('__file__'):
+                input_name = input_name.split('__file__')[1]
+                if input_name not in formatted_parameters['files']:
+                    formatted_parameters['files'][input_name] = []
+                formatted_parameters['files'][input_name].append({
+                    'url_name': input_name.replace('.', '_'),
+                    'value': input_val,
+                })
+            else:
+                if input_name not in formatted_parameters['inputs']:
+                    formatted_parameters['inputs'][input_name] = []
+                formatted_parameters['inputs'][input_name].append(
+                    format_parameter(input_val))
+
+    for output_elem in task.outputs:
+        for output_name, output_val in output_elem.items():
+            if output_name.startswith('__file__'):
+                output_name = output_name.split('__file__')[1]
+                if output_name not in formatted_parameters['files']:
+                    formatted_parameters['files'][output_name] = []
+                formatted_parameters['files'][output_name].append({
+                    'url_name': output_name.replace('.', '_'),
+                    'value': output_val,
+                })
+            else:
+                if output_name not in formatted_parameters['outputs']:
+                    formatted_parameters['outputs'][output_name] = []
+                formatted_parameters['outputs'][output_name].append(
+                    format_parameter(output_val))
+
+    for file_elem in task.files:
+        for file_name, file_val in file_elem.items():
+            if file_name not in formatted_parameters['files']:
+                formatted_parameters['files'][file_name] = []
+            formatted_parameters['files'][file_name].append({
+                'url_name': file_name.replace('.', '_'),
+                'value': file_val,
+            })
+
+    out = {
+        'commands': cg_fmt,
+        'formatted_parameters': formatted_parameters,
+    }
+
+    return out
+
+
+@app.route('/get_full_task', methods=['POST'])
+def get_full_task():
+    'Get task including all formatted inputs/outputs/files for all elements/iterations.'
+
+    task_idx = int(request.form['taskIdx'])
+    wid = request.form['workflowID']
+    element_idx = int(request.form['elementIdx'])
+    wk = find_workflow(id=wid)
+    task = wk.tasks[task_idx]
+
+    page = render_template(
+        'task_full.html',
+        id=wid,
+        workflow=wk,
+        task=task,
+        element_idx=element_idx,
+        **get_task_arguments(task),
+        resource_use=format_task_resources(task),
+    )
+    return page
 
 
 @app.route('/get_task', methods=['POST'])
@@ -159,61 +262,6 @@ def get_task():
         task=task,
         element_idx=element_idx,
         commands=cg_fmt,
-    )
-    return page
-
-
-@app.route('/get_param', methods=['POST'])
-def get_param():
-
-    task_idx = int(request.form['task_idx'])
-    wid = request.form['wid']
-    element_idx = int(request.form['element_idx'])
-    param_name = request.form['param_name']
-    param_type = request.form['param_type']
-
-    wk = find_workflow(id=wid)
-    task = wk.tasks[task_idx]
-
-    if param_type == 'input':
-        param = task.inputs[element_idx][param_name]
-    elif param_type == 'output':
-        param = task.outputs[element_idx][param_name]
-
-    param_fmt = format_parameter(param)
-
-    page = render_template(
-        'param.html',
-        name=param_name,
-        value=param_fmt,
-        param_type=param_type
-    )
-    return page
-
-
-@app.route('/get_file', methods=['POST'])
-def get_file():
-
-    task_idx = int(request.form['task_idx'])
-    wid = request.form['wid']
-    element_idx = int(request.form['element_idx'])
-    file_name = request.form['file_name']
-    file_location = request.form['file_location']
-
-    wk = find_workflow(id=wid)
-    task = wk.tasks[task_idx]
-
-    if file_location == 'files':
-        file_str = task.files[element_idx][file_name]
-    elif file_location == 'inputs':
-        file_str = task.inputs[element_idx]['__file__' + file_name]
-    elif file_location == 'outputs':
-        file_str = task.outputs[element_idx]['__file__' + file_name]
-
-    page = render_template(
-        'file.html',
-        name=file_name,
-        value=file_str,
     )
     return page
 

@@ -1,0 +1,232 @@
+{% block task_block %}
+<h3>Task: {{ task.name_friendly }}</h3>
+<div class="task-info-items-wrap">
+    <div class="task-info-item">
+        <div class="task-info-label">Element:</div>
+        <div class="task-info-value">
+            <span class="element-selector">
+                {% for elem in task.inputs -%}
+                {% if loop.index0 == element_idx %}
+                {% set active_class = ' element-button-active' %}
+                {% else %}
+                {% set active_class = '' %}
+                {% endif %}
+                <span class="task-element-button{{ active_class }}" data-wid="{{ id }}"
+                    data-task-idx="{{ task.task_idx }}" data-element-idx="{{ loop.index0 }}">{{ loop.index }}</span>
+                {%- endfor %}</span>
+        </div>
+    </div>
+    <div class="task-info-item">
+        <div class="task-info-label">Inputs:</div>
+        <div class="task-info-value">
+            {% for param_name in task.schema.inputs | sort %}
+            {% if param_name == active_input_name %}
+            {% set active_class = ' param-name-active' %}
+            {% else %}
+            {% set active_class = '' %}
+            {% endif %}
+            {% set param_name_friendly = param_name | replace('_', ' ') %}
+            {% set param_name_url_friendly = param_name | replace('.', '_') %}
+            <span class="task-param-name task-input-name{{ active_class }}" data-wid="{{ id }}"
+                data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                data-param-name="{{ param_name_url_friendly }}" data-param-type="input">{{ param_name_friendly }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="task-info-item">
+        <div class="task-info-label">Input maps:</div>
+        <div class="task-info-value">
+            {% for in_map in task.schema.input_map %}
+            <div class="task-input-map">
+                <div class="task-input-map-inputs-list">
+                    {% for param_name in in_map.inputs | sort %}
+                    {% set param_name_friendly = param_name | replace('_', ' ') %}
+                    {% set param_name_url_friendly = param_name | replace('.', '_') %}
+                    {% if param_name == active_input_name %}
+                    {% set active_class = ' param-name-active' %}
+                    {% else %}
+                    {% set active_class = '' %}
+                    {% endif %}
+                    <span class="task-param-name task-input-name{{ active_class }}" data-wid="{{ id }}"
+                        data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                        data-param-name="{{ param_name_url_friendly }}"
+                        data-param-type="input">{{ param_name_friendly }}</span>{% endfor %}</div>
+                <span
+                    class="inout-map-arrow">➞</span>{% set file_name = in_map.file %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class='task-info-item'>
+        <div class="task-info-label">Commands:</div>
+        <div class="task-info-value">
+            <pre>{% for cmd in commands %}<div class="cmd">{{ cmd }}</div>{% endfor %}</pre>
+        </div>
+    </div>
+
+
+    <div class="task-info-item">
+        <div class="task-info-label">Output maps:</div>
+        <div class="task-info-value">
+            {% for out_map in task.schema.output_map %}
+            <div class="task-output-map">
+                <div class="task-output-map-files-list">
+                    {% for file_name in out_map.files | sort %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+                </div>
+                <span class="inout-map-arrow">➞</span>
+                {% set param_name = out_map.output %}
+                {% set param_name_friendly = param_name | replace('_', ' ') %}
+                {% set param_name_url_friendly = param_name | replace('.', '_') %}
+                {% if param_name == active_output_name %}
+                {% set active_class = ' param-name-active' %}
+                {% else %}
+                {% set active_class = '' %}
+                {% endif %}
+                <span class="task-param-name task-output-name{{ active_class }}" data-wid="{{ id }}"
+                    data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                    data-param-name="{{ param_name_url_friendly }}"
+                    data-param-type="output">{{ param_name_friendly }}</span>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="task-info-item">
+        <div class="task-info-label">Outputs:</div>
+        <div class="task-info-value">
+            {% set param_type = 'output' %}
+            {% for param_name in task.schema.outputs | sort %}
+            {% if param_name.startswith('__file__') %}
+            {% set file_name = param_name.split('__file__')[1] %}
+            {% set file_location = 'outputs' %}
+            {% include 'file_button.html' %}
+            {% else %}
+            {% set param_name_friendly = param_name | replace('_', ' ') %}
+            {% set param_name_url_friendly = param_name | replace('.', '_') %}
+            {% if param_name == active_output_name %}
+            {% set active_class = ' param-name-active' %}
+            {% else %}
+            {% set active_class = '' %}
+            {% endif %}
+            <span class="task-param-name task-output-name{{ active_class }}" data-wid="{{ id }}"
+                data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                data-param-name="{{ param_name_url_friendly }}"
+                data-param-type="output">{{ param_name_friendly }}</span>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="task-info-item">
+        <div class="task-info-label">Duration:</div>
+        <div class="task-info-value">
+            {% for res_use in resource_use %}
+            {% if loop.index0 == element_idx %}
+            {% set active_class = ' task-duration-active' %}
+            {% else %}
+            {% set active_class = '' %}
+            {% endif %}
+            <div class="task-duration{{ active_class }}" data-element-idx="{{ loop.index0 }}">{{ res_use.duration }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% if resource_use[0].hostname %}
+    <div class="task-info-item">
+        <div class="task-info-label">Resource use:</div>
+        <div class="task-info-value">
+            <div class="resource-usage-wrapper">
+                <div class="resource-usage-item-label">Hostname </div>
+                <div class="resource-usage-item-value">
+                    {% for res_use in resource_use %}
+                    {% if loop.index0 == element_idx %}
+                    {% set active_class = ' task-resource-use-active' %}
+                    {% else %}
+                    {% set active_class = '' %}
+                    {% endif %}
+                    <div class="task-resource-use{{ active_class }}" data-element-idx="{{ loop.index0 }}">
+                        {{ res_use.hostname }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="resource-usage-wrapper">
+                <div class="resource-usage-item-label">Wall clock </div>
+                <div class="resource-usage-item-value">
+                    {% for res_use in resource_use %}
+                    {% if loop.index0 == element_idx %}
+                    {% set active_class = ' task-resource-use-active' %}
+                    {% else %}
+                    {% set active_class = '' %}
+                    {% endif %}
+                    <div class="task-resource-use{{ active_class }}" data-element-idx="{{ loop.index0 }}">
+                        {{ res_use.wallclock }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="param-inspector">
+    {% for name, input_elements in formatted_parameters['inputs'].items() %}
+    {% if name == active_input_name %}
+    {% set active_class = ' param-active' %}
+    {% else %}
+    {% set active_class = '' %}
+    {% endif %}
+    <div class="param-wrapper{{ active_class }}" data-param-type="input" data-param-name="{{ name }}">
+        <h4>Input: {{ name | replace('_', ' ') }}</h4>
+        {% for value in input_elements  %}
+        {% if loop.index0 == element_idx %}
+        {% set active_class = ' element-param-active' %}
+        {% else %}
+        {% set active_class = '' %}
+        {% endif %}
+        <div class="task-param-inspector{{ active_class }}" data-element-idx="{{ loop.index0 }}">{{ value | safe }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% for name, output_elements in formatted_parameters['outputs'].items() %}
+    {% if name == active_output_name %}
+    {% set active_class = ' param-active' %}
+    {% else %}
+    {% set active_class = '' %}
+    {% endif %}
+    <div class="param-wrapper{{ active_class }}" data-param-type="output" data-param-name="{{ name }}">
+        <h4>Output: {{ name | replace('_', ' ') }}</h4>
+        {% for value in output_elements  %}
+        {% if loop.index0 == element_idx %}
+        {% set active_class = ' element-param-active' %}
+        {% else %}
+        {% set active_class = '' %}
+        {% endif %}
+        <div class="task-param-inspector{{ active_class }}" data-element-idx="{{ loop.index0 }}">{{ value | safe }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% for name, file_elements in formatted_parameters['files'].items() %}
+    {% set url_friendly_name = name | replace('.', '_') %}
+    {% if url_friendly_name == active_file_name %}
+    {% set active_class = ' param-active' %}
+    {% else %}
+    {% set active_class = '' %}
+    {% endif %}
+    <div class="param-wrapper{{ active_class }}" data-param-type="file" data-param-name="{{ url_friendly_name }}">
+        <h4>File: {{ name }}</h4>
+        {% for value in file_elements  %}
+        {% if loop.index0 == element_idx %}
+        {% set active_class = ' element-param-active' %}
+        {% else %}
+        {% set active_class = '' %}
+        {% endif %}
+        <div class="task-param-inspector{{ active_class }}" data-element-idx="{{ loop.index0 }}">
+            {% highlight 'text' %}{{ value['value'] }}{% endhighlight %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
