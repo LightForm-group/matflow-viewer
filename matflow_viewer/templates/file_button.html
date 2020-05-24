@@ -1,3 +1,4 @@
+{% set file_name = file_name.name %}
 {% set file_name_url_friendly = file_name | replace('.', '_') %}
 {% if file_name_url_friendly == active_file_name %}
 {% set active_class = ' param-name-active' %}

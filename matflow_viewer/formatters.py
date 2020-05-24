@@ -1,143 +1,8 @@
-import os
-import random
-import threading
-import webbrowser
-import requests
-from pathlib import Path
-import json
-from pprint import pprint, pformat
-from datetime import datetime, timedelta
 import copy
+from datetime import timedelta
 
 import numpy as np
 from hpcflow.utils import format_time_delta
-
-from github import Github
-import jinja2_highlight
-from matflow.api import load_workflow
-from werkzeug.utils import secure_filename
-
-from flask import Flask, render_template, request, redirect, url_for, flash
-
-
-DOWNLOAD_DIR = Path(__file__).parent.joinpath('downloaded')
-GITHUB_REPO_NAME = None  # 'aplowman/matflow-workflows'
-GH_TOKEN = '9c538cfd05411306582851f73a4c914d13635904'
-ALLOWED_EXTENSIONS = {'hdf5'}
-
-
-class MyFlask(Flask):
-    jinja_options = dict(Flask.jinja_options)
-    jinja_options.setdefault('extensions',
-                             []).append('jinja2_highlight.HighlightExtension')
-
-
-app = MyFlask(__name__)
-app.config['UPLOAD_FOLDER'] = DOWNLOAD_DIR
-
-
-def get_workflow_files_from_public_repo(repo_name):
-
-    g = Github(GH_TOKEN)
-    repo = g.get_repo(repo_name)
-    contents = repo.get_contents('')
-    workflow_paths = []
-    while contents:
-        file_content = contents.pop(0)
-        if file_content.type == 'dir':
-            contents.extend(repo.get_contents(file_content.path))
-        elif file_content.path.endswith('workflow.hdf5'):
-            workflow_paths.append(file_content.path)
-
-    return workflow_paths
-
-
-@app.route('/')
-def index():
-    workflow_paths = None
-    if GITHUB_REPO_NAME:
-        workflow_paths = get_workflow_files_from_public_repo(GITHUB_REPO_NAME)
-    tmpl = render_template(
-        'index.html',
-        repo_name=GITHUB_REPO_NAME,
-        workflow_paths=workflow_paths
-    )
-
-    return tmpl
-
-
-@app.route('/get_workflow/<path>', methods=['POST', 'GET'])
-def get_remote_workflow(path):
-    url = 'https://raw.githubusercontent.com/{}/master/{}'.format(GITHUB_REPO_NAME, path)
-    wk_path = download_file(url)
-    redirect_url = url_for('workflow_profile', id=wk_path.name)
-    return redirect(redirect_url)
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-@app.route('/get_local_workflow', methods=['GET', 'POST'])
-def get_local_workflow():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            id = random.randint(0, 999)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], str(id)))
-            redirect_url = url_for('workflow_profile', id=id)
-            return redirect(redirect_url)
-
-    return redirect(url_for('index'))
-
-
-def find_workflow(id):
-    wk_path = DOWNLOAD_DIR.joinpath(id)
-    return load_workflow(wk_path, viewer=True, full_path=True)
-
-
-@app.route('/workflow/<id>/profile')
-def workflow_profile(id):
-    wk = find_workflow(id=id)
-    return render_template('workflow_profile.html', id=id, workflow=wk)
-
-
-@app.route('/workflow/<id>/info')
-def workflow_info(id):
-    wk = find_workflow(id=id)
-    return render_template('workflow_info.html', id=id, workflow=wk)
-
-
-@app.route('/workflow/<id>/task/')
-@app.route('/workflow/<id>/task/<int:task_idx>/')
-@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/')
-@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/input/<active_input_name>/')
-@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/output/<active_output_name>/')
-@app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/file/<active_file_name>/')
-def workflow_tasks(id, task_idx=0, element_idx=0, active_input_name=None,
-                   active_output_name=None, active_file_name=None):
-    wk = find_workflow(id=id)
-    task = wk.tasks[task_idx]
-    page = render_template(
-        'workflow_tasks.html',
-        id=id,
-        workflow=wk,
-        task=task,
-        element_idx=int(element_idx),
-        active_input_name=active_input_name,
-        active_output_name=active_output_name,
-        active_file_name=active_file_name,
-        **get_task_arguments(task),
-        resource_use=format_task_resources(task),
-    )
-    return page
 
 
 def format_task_resources(task):
@@ -152,12 +17,6 @@ def format_task_resources(task):
         res_use.append(i)
 
     return res_use
-
-
-@app.route('/workflow/<id>/figures')
-def workflow_figures(id):
-    wk = find_workflow(id=id)
-    return render_template('workflow_figures.html', id=id, workflow=wk)
 
 
 def get_task_arguments(task):
@@ -214,64 +73,6 @@ def get_task_arguments(task):
     }
 
     return out
-
-
-@app.route('/get_full_task', methods=['POST'])
-def get_full_task():
-    'Get task including all formatted inputs/outputs/files for all elements/iterations.'
-
-    task_idx = int(request.form['taskIdx'])
-    wid = request.form['workflowID']
-    element_idx = int(request.form['elementIdx'])
-    wk = find_workflow(id=wid)
-    task = wk.tasks[task_idx]
-
-    page = render_template(
-        'task_full.html',
-        id=wid,
-        workflow=wk,
-        task=task,
-        element_idx=element_idx,
-        **get_task_arguments(task),
-        resource_use=format_task_resources(task),
-    )
-    return page
-
-
-@app.route('/get_task', methods=['POST'])
-def get_task():
-    print('getting task!')
-    task_idx = int(request.form['task_idx'])
-    wid = request.form['wid']
-    element_idx = int(request.form['element_idx'])
-    wk = find_workflow(id=wid)
-    task = wk.tasks[task_idx]
-    cg_fmt = task.schema.command_group.get_formatted_commands([])[0]
-
-    print('wk: {}'.format(wk))
-    print('task: {}'.format(task))
-    print('cg_fmt: {}'.format(cg_fmt))
-
-    # TODO: after element and iterations sorted:
-    formatted_resource_use = {}
-
-    page = render_template(
-        'task.html',
-        id=wid,
-        workflow=wk,
-        task=task,
-        element_idx=element_idx,
-        commands=cg_fmt,
-    )
-    return page
-
-
-def download_file(url):
-    download_path = DOWNLOAD_DIR.joinpath('{}'.format(random.randint(0, 999)))
-    r = requests.get(url)
-    with download_path.open('wb') as handle:
-        handle.write(r.content)
-    return download_path
 
 
 def format_parameter(param):
@@ -586,14 +387,3 @@ def format_dict(d, depth=0, indent='\t', assign='=', arr_kw=None):
                 assign + ' {!r}\n'.format(v)
 
     return out
-
-
-if __name__ == '__main__':
-
-    port = 5000
-    url = "http://127.0.0.1:{0}".format(port)
-
-    if 'WERKZEUG_RUN_MAIN' not in os.environ:
-        threading.Timer(1.25, lambda: webbrowser.open(url)).start()
-    app.secret_key = 'super secret key'
-    app.run(port=port, debug=True)

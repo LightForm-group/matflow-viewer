@@ -1,0 +1,9 @@
+name: matflow_viewer_env
+dependencies:
+- python
+- pip
+- pylint
+- ipykernel
+- rope
+- autopep8
+- twine

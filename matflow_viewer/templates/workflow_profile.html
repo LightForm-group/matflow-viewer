@@ -3,7 +3,7 @@
 {% block content %}
 {{ super() }}
 <div id="wk-main" data-workflow-id="{{ id }}">
-    {% highlight 'yaml' %}{{ workflow.profile_str }}{% endhighlight %}
+    {% highlight 'yaml' %}{{ workflow.profile_file }}{% endhighlight %}
 </div>
 
 {% endblock %}

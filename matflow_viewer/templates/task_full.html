@@ -19,7 +19,7 @@
     <div class="task-info-item">
         <div class="task-info-label">Inputs:</div>
         <div class="task-info-value">
-            {% for param_name in task.schema.inputs | sort %}
+            {% for param_name in task.schema.inputs_condensed | sort %}
             {% if param_name == active_input_name %}
             {% set active_class = ' param-name-active' %}
             {% else %}
