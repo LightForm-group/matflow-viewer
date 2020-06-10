@@ -7,10 +7,9 @@ from hpcflow.utils import format_time_delta
 
 def format_task_resources(task):
     res_use = []
-    for i in task.resource_usage:
+    for i in (task.resource_usage or []):
 
         i = copy.deepcopy(i)
-        # dt_fmt = r'%Y.%m.%d %H:%M:%S'
         td = timedelta(**i['duration'])
         i['duration'] = format_time_delta(td)
 
@@ -20,14 +19,16 @@ def format_task_resources(task):
 
 
 def get_task_arguments(task):
-    cg_fmt = task.schema.command_group.get_formatted_commands([])[0]
+    cg_fmt = task.get_formatted_commands()[0]
     formatted_parameters = {
         'inputs': {},
         'outputs': {},
         'files': {},
     }
-    for input_elem in task.inputs:
-        for input_name, input_val in input_elem.items():
+
+    for element in task.elements:
+
+        for input_name, input_val in element.inputs.get_all().items():
             if input_name.startswith('__file__'):
                 input_name = input_name.split('__file__')[1]
                 if input_name not in formatted_parameters['files']:
@@ -42,8 +43,7 @@ def get_task_arguments(task):
                 formatted_parameters['inputs'][input_name].append(
                     format_parameter(input_val))
 
-    for output_elem in task.outputs:
-        for output_name, output_val in output_elem.items():
+        for output_name, output_val in element.outputs.get_all().items():
             if output_name.startswith('__file__'):
                 output_name = output_name.split('__file__')[1]
                 if output_name not in formatted_parameters['files']:
@@ -58,8 +58,7 @@ def get_task_arguments(task):
                 formatted_parameters['outputs'][output_name].append(
                     format_parameter(output_val))
 
-    for file_elem in task.files:
-        for file_name, file_val in file_elem.items():
+        for file_name, file_val in element.files.get_all().items():
             if file_name not in formatted_parameters['files']:
                 formatted_parameters['files'][file_name] = []
             formatted_parameters['files'][file_name].append({

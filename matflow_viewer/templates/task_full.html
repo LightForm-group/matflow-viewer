@@ -5,7 +5,7 @@
         <div class="task-info-label">Element:</div>
         <div class="task-info-value">
             <span class="element-selector">
-                {% for elem in task.inputs -%}
+                {% for elem in task.elements -%}
                 {% if loop.index0 == element_idx %}
                 {% set active_class = ' element-button-active' %}
                 {% else %}
@@ -71,7 +71,7 @@
             {% for out_map in task.schema.output_map %}
             <div class="task-output-map">
                 <div class="task-output-map-files-list">
-                    {% for file_name in out_map.files | sort %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+                    {% for file_name in out_map.files | sort %}{% set file_name = file_name.name %}{% set file_location = 'files' %}{% include 'file_button.html' %}
                 </div>
                 <span class="inout-map-arrow">➞</span>
                 {% set param_name = out_map.output %}
@@ -116,55 +116,6 @@
             {% endfor %}
         </div>
     </div>
-    <div class="task-info-item">
-        <div class="task-info-label">Duration:</div>
-        <div class="task-info-value">
-            {% for res_use in resource_use %}
-            {% if loop.index0 == element_idx %}
-            {% set active_class = ' task-duration-active' %}
-            {% else %}
-            {% set active_class = '' %}
-            {% endif %}
-            <div class="task-duration{{ active_class }}" data-element-idx="{{ loop.index0 }}">{{ res_use.duration }}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% if resource_use[0].hostname %}
-    <div class="task-info-item">
-        <div class="task-info-label">Resource use:</div>
-        <div class="task-info-value">
-            <div class="resource-usage-wrapper">
-                <div class="resource-usage-item-label">Hostname </div>
-                <div class="resource-usage-item-value">
-                    {% for res_use in resource_use %}
-                    {% if loop.index0 == element_idx %}
-                    {% set active_class = ' task-resource-use-active' %}
-                    {% else %}
-                    {% set active_class = '' %}
-                    {% endif %}
-                    <div class="task-resource-use{{ active_class }}" data-element-idx="{{ loop.index0 }}">
-                        {{ res_use.hostname }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="resource-usage-wrapper">
-                <div class="resource-usage-item-label">Wall clock </div>
-                <div class="resource-usage-item-value">
-                    {% for res_use in resource_use %}
-                    {% if loop.index0 == element_idx %}
-                    {% set active_class = ' task-resource-use-active' %}
-                    {% else %}
-                    {% set active_class = '' %}
-                    {% endif %}
-                    <div class="task-resource-use{{ active_class }}" data-element-idx="{{ loop.index0 }}">
-                        {{ res_use.wallclock }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <div id="param-inspector">
