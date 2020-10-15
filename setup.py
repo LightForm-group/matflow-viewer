@@ -8,6 +8,8 @@ setup(
         'jinja2_highlight',
         'pygithub',
         'flask',
+        'sqlitedict',
+        'plotly',
     ],
     entry_points={
         'console_scripts': [
