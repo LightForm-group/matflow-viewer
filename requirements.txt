@@ -3,3 +3,7 @@ ipykernel
 rope
 autopep8
 twine
+jinja2_highlight
+pygithub
+flask
+git+git://github.com/LightForm-group/matflow@dev#egg=matflow
