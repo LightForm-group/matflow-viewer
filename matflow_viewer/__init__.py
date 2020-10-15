@@ -5,7 +5,9 @@ import jinja2_highlight
 from flask import Flask
 
 DOWNLOAD_DIR = Path(__file__).parent.joinpath('downloaded')
-GITHUB_REPO_NAME = None
+DB_PATH = Path(__file__).parent.joinpath('workflows.sqlite')
+GITHUB_REPO_NAME = None # 'aplowman/matflow-workflows'
+WORKFLOW_SEARCH_DIR = DOWNLOAD_DIR # r'C:\Users\adamj\dropbox\sims_db\matflow\archived'
 GH_TOKEN = os.getenv('GH_TOKEN')
 ALLOWED_EXTENSIONS = {'hdf5'}
 

@@ -7,14 +7,15 @@
         integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/syntax_highlight.css') }}">
-
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <title>{% block title %}{% endblock %} - matflow viewer</title>
     {% endblock %}
 </head>
 
 <body>
     <div id="header">
-        <a href="{{ url_for('index') }}">Workflow viewer</a>
+        <a href="{{ url_for('index') }}" title="Home" id="header-home">⌂</a>
+        <a href="{{ url_for('index') }}" title="Home">MatFlow Viewer</a>
     </div>
     <div id="content">{% block content %}{% endblock %}</div>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
@@ -25,6 +26,7 @@
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 
 </html>

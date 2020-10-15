@@ -2,6 +2,7 @@ import random
 import requests
 
 from github import Github
+from plotly import graph_objects
 
 from matflow_viewer import DOWNLOAD_DIR, GH_TOKEN
 
@@ -28,3 +29,10 @@ def download_file(url):
     with download_path.open('wb') as handle:
         handle.write(r.content)
     return download_path
+
+
+def get_nested_item(obj, address):
+    out = obj
+    for i in address:
+        out = out[i]
+    return out

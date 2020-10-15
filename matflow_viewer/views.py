@@ -3,10 +3,28 @@ import random
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from matflow.api import load_workflow
+from matflow.utils import get_workflow_paths, order_workflow_paths_by_date
+from sqlitedict import SqliteDict
+import numpy as np
 
-from matflow_viewer import app, GITHUB_REPO_NAME, DOWNLOAD_DIR, ALLOWED_EXTENSIONS
-from matflow_viewer.formatters import get_task_arguments, format_task_resources
-from matflow_viewer.utils import download_file, get_workflow_files_from_public_repo
+
+from matflow_viewer import (
+    app,
+    GITHUB_REPO_NAME,
+    DOWNLOAD_DIR,
+    ALLOWED_EXTENSIONS,
+    DB_PATH,
+    WORKFLOW_SEARCH_DIR,
+)
+from matflow_viewer.formatters import (
+    get_task_arguments,
+    format_task_resources,
+    format_parameter,
+)
+from matflow_viewer.utils import (
+    download_file,
+    get_workflow_files_from_public_repo,
+)
 
 
 @app.route('/')
@@ -14,13 +32,42 @@ def index():
     workflow_paths = None
     if GITHUB_REPO_NAME:
         workflow_paths = get_workflow_files_from_public_repo(GITHUB_REPO_NAME)
-    tmpl = render_template(
+    else:
+        if WORKFLOW_SEARCH_DIR is not None:
+            local_search_path = WORKFLOW_SEARCH_DIR
+        else:
+            with SqliteDict(DB_PATH, autocommit=True) as dict_DB:
+                local_search_path = dict_DB['workflow_search_path']
+    page = render_template(
         'index.html',
         repo_name=GITHUB_REPO_NAME,
-        workflow_paths=workflow_paths
+        workflow_paths=workflow_paths,
+        local_search_path=local_search_path,
+        search_path_editable=(WORKFLOW_SEARCH_DIR is None),
     )
 
-    return tmpl
+    return page
+
+
+@app.route('/find_local_workflows', methods=['POST', 'GET'])
+def find_local_workflows():
+    if request.method == 'POST':
+        base_path = request.json['basePath']
+        local_workflows = get_workflow_paths(base_path)
+        local_workflows = order_workflow_paths_by_date(local_workflows)[::-1]
+        with SqliteDict(DB_PATH, autocommit=True) as dict_DB:
+            wkflow_ids = {}
+            for wk in local_workflows:
+                wkflow_ids.update({wk['ID']: wk})
+            dict_DB['workflow_IDs'] = wkflow_ids
+            dict_DB['workflow_search_path'] = base_path
+
+        page = render_template(
+            'local_workflows.html',
+            local_workflows=local_workflows,
+        )
+        return page
+    return redirect(url_for('index'))
 
 
 @app.route('/get_workflow/<path>', methods=['POST', 'GET'])
@@ -56,7 +103,9 @@ def get_local_workflow():
 
 
 def find_workflow(id):
-    wk_path = DOWNLOAD_DIR.joinpath(id)
+    with SqliteDict(DB_PATH) as dict_DB:
+        wk_data = dict_DB['workflow_IDs'][id]
+        wk_path = wk_data['full_path']
     return load_workflow(wk_path, full_path=True)
 
 
@@ -98,9 +147,31 @@ def workflow_tasks(id, task_idx=0, element_idx=0, active_input_name=None,
 
 
 @app.route('/workflow/<id>/figures')
-def workflow_figures(id):
+@app.route('/workflow/<id>/figures/<int:figure_idx>/')
+def workflow_figures(id, figure_idx=0):
     wk = find_workflow(id=id)
-    return render_template('workflow_figures.html', id=id, workflow=wk)
+    fig_spec = None
+    fig_JSON = None
+    dat_arr_table = None
+    if wk.figures:
+        fig_spec = wk.figures[figure_idx]
+        fig_obj = wk.get_figure_object(figure_idx, backend='plotly')
+        fig_data = wk.get_figure_data(figure_idx)
+        dat_arr = np.array([
+            ['x'] + list(fig_data['x']),
+            ['y'] + list(fig_data['y']),
+        ]).T
+        dat_arr_table = format_parameter(dat_arr)
+        fig_JSON = fig_obj.to_json()
+    page = render_template(
+        'workflow_figures.html',
+        id=id,
+        workflow=wk,
+        figure=fig_spec,
+        fig_JSON=fig_JSON,
+        figure_data=dat_arr_table,
+    )
+    return page
 
 
 @app.route('/get_full_task', methods=['POST'])
@@ -121,6 +192,31 @@ def get_full_task():
         element_idx=element_idx,
         **get_task_arguments(task),
         resource_use=format_task_resources(task),
+    )
+    return page
+
+
+@app.route('/get_full_figure', methods=['POST'])
+def get_full_figure():
+    fig_idx = int(request.form['figIdx'])
+    wid = request.form['workflowID']
+    wk = find_workflow(id=wid)
+    fig_spec = wk.figures[fig_idx]
+    fig_obj = wk.get_figure_object(fig_idx, backend='plotly')
+    fig_data = wk.get_figure_data(fig_idx)
+    dat_arr = np.array([
+        ['x'] + list(fig_data['x']),
+        ['y'] + list(fig_data['y']),
+    ]).T
+    dat_arr_table = format_parameter(dat_arr)
+    fig_JSON = fig_obj.to_json()
+    page = render_template(
+        'figure_full.html',
+        id=wid,
+        workflow=wk,
+        figure=fig_spec,
+        figure_data=dat_arr_table,
+        fig_JSON=fig_JSON,
     )
     return page
 

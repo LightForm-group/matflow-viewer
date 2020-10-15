@@ -91,7 +91,11 @@ def format_parameter(param):
     elif isinstance(param, np.ndarray):
         if param.ndim == 1:
             param = param[:, None]
-        param_fmt = format_arr(param, format_spec='{:.5g}', html=True, html_classes={
+        if param.dtype.kind in {'U', 'S'}:
+            fmt_spec = '{:}'
+        else:
+            fmt_spec = '{:.5g}'
+        param_fmt = format_arr(param, format_spec=fmt_spec, html=True, html_classes={
             'table': ['ndarray']})
     else:
         param_fmt = '{}'.format(param)

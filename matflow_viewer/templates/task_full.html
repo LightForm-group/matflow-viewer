@@ -19,7 +19,7 @@
     <div class="task-info-item">
         <div class="task-info-label">Inputs:</div>
         <div class="task-info-value">
-            {% for param_name in task.schema.inputs_condensed | sort %}
+            {% for param_name in task.schema.input_aliases | sort %}
             {% if param_name == active_input_name %}
             {% set active_class = ' param-name-active' %}
             {% else %}
@@ -60,7 +60,7 @@
     <div class='task-info-item'>
         <div class="task-info-label">Commands:</div>
         <div class="task-info-value">
-            <pre>{% for cmd in commands %}<div class="cmd">{{ cmd }}</div>{% endfor %}</pre>
+            <pre>{% for cmd in commands %}<div class="cmd">{{ cmd['line'] }}</div>{% endfor %}</pre>
         </div>
     </div>
 
@@ -71,7 +71,7 @@
             {% for out_map in task.schema.output_map %}
             <div class="task-output-map">
                 <div class="task-output-map-files-list">
-                    {% for file_name in out_map.files | sort %}{% set file_name = file_name.name %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+                    {% for file_name in out_map.files | sort(attribute='name') %}{% set file_name = file_name.name %}{% set file_location = 'files' %}{% include 'file_button.html' %}
                 </div>
                 <span class="inout-map-arrow">➞</span>
                 {% set param_name = out_map.output %}

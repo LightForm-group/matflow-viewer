@@ -1,4 +1,34 @@
-{% extends "workflow_tasks.html" %}
-{% block param_block %}
-Hi
+{% extends "nav.html" %}
+{% block nav_figures %}active{% endblock %}
+{% block content %}
+{{ super() }}
+<div id="wk-main" class="wk-main-tasks" data-workflow-id="{{ id }}">
+
+    <span id="all-tasks-button">Figures List</span>
+    <div class="task-row">
+        <div id="task-list-wrapper">
+            <div id="task-list-wrapper-label">Figure List</div>
+            {% for fig_i in workflow.figures %}
+            {% if figure.idx == fig_i.idx %}
+            {% set task_active_class = 'task-active' %}
+            {% else %}
+            {% set task_active_class = '' %}
+            {% endif %}
+            <div class='fig-wrapper {{ task_active_class }}' data-fig-idx="{{ fig_i.idx }}" data-wid="{{ id }}">
+                <div class="task-brief-info">
+                    <div><span class="task-brief-info-name">Figure {{ fig_i.idx + 1 }}: {{ fig_i.name }}</span></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="fig-inspector-wrapper">
+            <div id="fig-inspector-overlay"></div>
+            <div class="fig-inspector" data-original-task-idx="{{ figure.idx }}" data-original-workflow-id="{{ id }}"
+                data-original-element-idx="{{ element_idx }}">
+                {% include 'figure_full.html' %}
+            </div>
+        </div>
+    </div>
+
+</div>
 {% endblock %}

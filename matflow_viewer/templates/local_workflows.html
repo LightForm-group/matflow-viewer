@@ -1,0 +1,16 @@
+{% block local_workflows_block %}
+<table class="local-workflows-table">
+    <tr>
+        <th>Workflow</th>
+        <th>Date</th>
+    </tr>
+    {% for wk in local_workflows %}
+    <tr>
+        <td><a class="local-workflow-load-path"
+                href="{{ url_for('workflow_profile', id=wk.ID) }}">{{ wk.display_path }}</a>
+        </td>
+        <td>{{ wk.display_timestamp }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

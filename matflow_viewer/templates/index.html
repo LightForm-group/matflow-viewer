@@ -13,10 +13,22 @@
 </div>
 {% else %}
 <div class="load-form">
+    <!-- <h4>Load from file</h4>
     <form action="/get_local_workflow" method="POST" enctype="multipart/form-data">
         <input type="file" name="file" />
         <input type="submit" value="Load" />
-    </form>
+    </form> -->
+    <h4>Available workflows</h4>
+    {% if search_path_editable %}
+    <div>Search directory:
+        <code><span id="search-dir-edit-button" contenteditable="true" spellcheck="false">{{ local_search_path }}</span></code>
+        <button id="search-dir-refresh-button">Refresh</button>
+    </div>
+    {% endif %}
+    <div id="workflow-paths-table" data-search-path="{{ local_search_path }}">
+        <div class="loader">Loading...</div>
+    </div>
+
 </div>
 {% endif %}
 {% endblock %}

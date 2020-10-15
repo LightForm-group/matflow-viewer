@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
-
+{% block title %}{{ workflow.name }}{% endblock %}
 {% block content %}
-
+<div id="loaded-workflow-meta">Workflow: <code>{{ workflow.loaded_path }}</code></div>
 <div id="wk-nav">
     <ul class="nav nav-tabs">
         <li class="nav-item">
@@ -16,8 +16,8 @@
                 href="{{ url_for('workflow_tasks', id=id, task_idx=0, element_idx=0) }}">Tasks</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% block nav_figures %}{% endblock %}" href="{{ url_for('workflow_figures', id=id) }}"
-                tabindex="-1" aria-disabled="true">Figures</a>
+            <a class="nav-link {% block nav_figures %}{% endblock %}"
+                href="{{ url_for('workflow_figures', id=id) }}">Figures</a>
         </li>
     </ul>
 </div>

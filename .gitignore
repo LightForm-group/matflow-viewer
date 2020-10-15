@@ -140,3 +140,5 @@ cython_debug/
 
 .vscode/
 downloaded/
+
+matflow_viewer/workflows.sqlite

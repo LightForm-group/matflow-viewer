@@ -17,8 +17,22 @@ $(document).ready(function () {
         };
     });
 
+
+    // Handle clicking to change figure:
+    $('.fig-wrapper').click(function (evt) {
+        var workflowID = $(this).data('wid');
+        var figIdx = $(this).data("fig-idx");
+        var data = {
+            "workflowID": workflowID,
+            "figIdx": figIdx,
+        };
+        var newURL = "/workflow/" + workflowID + "/figures/" + figIdx
+        changeFigure(data);
+        history.pushState(data, "", newURL);
+    });
+
     // Handle clicking to change task:
-    $('.task-wrapper').click(function (evt) {
+    $('.task-wrapper:not(.figure)').click(function (evt) {
         var workflowID = $(this).data('wid');
         var taskIdx = $(this).data("task-idx");
         var data = {
@@ -203,6 +217,76 @@ $(document).ready(function () {
             $('#task-list-wrapper').removeClass('my-modal');
         };
     }
+
+
+    function changeFigure(state) {
+
+        var workflowID = state.workflowID;
+        var figIdx = state.figIdx;
+
+        console.log("requesting new figure idx: ", figIdx);
+
+        $('#fig-inspector-overlay').addClass('loading');
+        $.ajax({
+            type: 'POST',
+            url: '/get_full_figure',
+            data: {
+                "workflowID": workflowID,
+                "figIdx": figIdx,
+            },
+            success: function (response) {
+                console.log("success!")
+                $('.fig-inspector').html(response);
+                $('.fig-wrapper.task-active').removeClass('task-active');
+                $('.fig-wrapper[data-fig-idx=' + figIdx + ']').addClass('task-active');
+            },
+            error: function (error) {
+                console.log(error);
+            },
+            complete: function (data) {
+                $('#fig-inspector-overlay').removeClass('loading');
+            }
+        })
+        if ($('#task-list-wrapper').hasClass('my-modal')) {
+            $('#task-list-wrapper').removeClass('my-modal');
+        };
+    };
+
+    function findWorkflows(basePath) {
+        $.ajax({
+            type: 'POST',
+            url: '/find_local_workflows',
+            data: JSON.stringify({ "basePath": basePath }, null, '\t'),
+            contentType: 'application/json;charset=UTF-8',
+            success: function (response) {
+                console.log("success!");
+                $('#workflow-paths-table').html(response);
+            },
+            error: function (error) {
+                console.log(error);
+            },
+            complete: function (data) {
+                console.log("complete!");
+                console.log(data);
+            }
+        })
+    };
+
+    var pathsTable = document.getElementById("workflow-paths-table");
+    if (typeof (pathsTable) != 'undefined' && pathsTable != null) {
+        console.log("div exists!");
+        var basePath = pathsTable.getAttribute('data-search-path');
+        basePath = basePath.replace(/<br>/gm, "");
+        findWorkflows(basePath);
+    }
+    $('#search-dir-refresh-button').on("click", function (event) {
+        var basePath = document.getElementById('search-dir-edit-button').innerHTML;
+        basePath = basePath.replace(/<br>/gm, "");
+        console.log(basePath);
+        $('#workflow-paths-table').html('<div class="loader">Loading...</div>');
+        findWorkflows(basePath);
+    });
+
 
     $(window).on("popstate", function (event) {
         originalState = event.originalEvent.state;
