@@ -1,25 +1,25 @@
 {% block task_block %}
-<h3>Task: {{ task.name_friendly }}</h3>
+<h3>Task: {{ task_name }}</h3>
 <div class="task-info-items-wrap">
     <div class="task-info-item">
         <div class="task-info-label">Element:</div>
         <div class="task-info-value">
             <span class="element-selector">
-                {% for elem in task.elements -%}
+                {% for elem_idx in range(num_elements) -%}
                 {% if loop.index0 == element_idx %}
                 {% set active_class = ' element-button-active' %}
                 {% else %}
                 {% set active_class = '' %}
                 {% endif %}
-                <span class="task-element-button{{ active_class }}" data-wid="{{ id }}"
-                    data-task-idx="{{ task.task_idx }}" data-element-idx="{{ loop.index0 }}">{{ loop.index }}</span>
+                <span class="task-element-button{{ active_class }}" data-wid="{{ id }}" data-task-idx="{{ task_idx }}"
+                    data-element-idx="{{ loop.index0 }}">{{ loop.index }}</span>
                 {%- endfor %}</span>
         </div>
     </div>
     <div class="task-info-item">
         <div class="task-info-label">Inputs:</div>
         <div class="task-info-value">
-            {% for param_name in task.schema.input_aliases | sort %}
+            {% for param_name in schema_info.input_aliases | sort %}
             {% if param_name == active_input_name %}
             {% set active_class = ' param-name-active' %}
             {% else %}
@@ -28,7 +28,7 @@
             {% set param_name_friendly = param_name | replace('_', ' ') %}
             {% set param_name_url_friendly = param_name | replace('.', '_') %}
             <span class="task-param-name task-input-name{{ active_class }}" data-wid="{{ id }}"
-                data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                data-task-idx="{{ task_idx }}" data-element-idx="{{ element_idx }}"
                 data-param-name="{{ param_name_url_friendly }}" data-param-type="input">{{ param_name_friendly }}</span>
             {% endfor %}
         </div>
@@ -36,7 +36,7 @@
     <div class="task-info-item">
         <div class="task-info-label">Input maps:</div>
         <div class="task-info-value">
-            {% for in_map in task.schema.input_map %}
+            {% for in_map in schema_info.input_map %}
             <div class="task-input-map">
                 <div class="task-input-map-inputs-list">
                     {% for param_name in in_map.inputs | sort %}
@@ -48,7 +48,7 @@
                     {% set active_class = '' %}
                     {% endif %}
                     <span class="task-param-name task-input-name{{ active_class }}" data-wid="{{ id }}"
-                        data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                        data-task-idx="{{ task_idx }}" data-element-idx="{{ element_idx }}"
                         data-param-name="{{ param_name_url_friendly }}"
                         data-param-type="input">{{ param_name_friendly }}</span>{% endfor %}</div>
                 <span
@@ -68,10 +68,10 @@
     <div class="task-info-item">
         <div class="task-info-label">Output maps:</div>
         <div class="task-info-value">
-            {% for out_map in task.schema.output_map %}
+            {% for out_map in schema_info.output_map %}
             <div class="task-output-map">
                 <div class="task-output-map-files-list">
-                    {% for file_name in out_map.files | sort(attribute='name') %}{% set file_name = file_name.name %}{% set file_location = 'files' %}{% include 'file_button.html' %}
+                    {% for file_name in out_map.files | sort %}{% set file_location = 'files' %}{% include 'file_button.html' %}
                 </div>
                 <span class="inout-map-arrow">➞</span>
                 {% set param_name = out_map.output %}
@@ -83,7 +83,7 @@
                 {% set active_class = '' %}
                 {% endif %}
                 <span class="task-param-name task-output-name{{ active_class }}" data-wid="{{ id }}"
-                    data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                    data-task-idx="{{ task_idx }}" data-element-idx="{{ element_idx }}"
                     data-param-name="{{ param_name_url_friendly }}"
                     data-param-type="output">{{ param_name_friendly }}</span>{% endfor %}
             </div>
@@ -95,7 +95,7 @@
         <div class="task-info-label">Outputs:</div>
         <div class="task-info-value">
             {% set param_type = 'output' %}
-            {% for param_name in task.schema.outputs | sort %}
+            {% for param_name in schema_info.outputs | sort %}
             {% if param_name.startswith('__file__') %}
             {% set file_name = param_name.split('__file__')[1] %}
             {% set file_location = 'outputs' %}
@@ -109,7 +109,7 @@
             {% set active_class = '' %}
             {% endif %}
             <span class="task-param-name task-output-name{{ active_class }}" data-wid="{{ id }}"
-                data-task-idx="{{ task.task_idx }}" data-element-idx="{{ element_idx }}"
+                data-task-idx="{{ task_idx }}" data-element-idx="{{ element_idx }}"
                 data-param-name="{{ param_name_url_friendly }}"
                 data-param-type="output">{{ param_name_friendly }}</span>
             {% endif %}
@@ -179,5 +179,8 @@
     </div>
     {% endfor %}
 </div>
+
+<!-- <button id="test-data-cache" data-wid="{{ id }}">Click me!</button> -->
+
 
 {% endblock %}

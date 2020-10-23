@@ -10,7 +10,7 @@ def main():
     url = "http://127.0.0.1:{0}".format(port)
 
     if 'WERKZEUG_RUN_MAIN' not in os.environ:
-        threading.Timer(1.25, lambda: webbrowser.open(url)).start()
+        threading.Timer(2, lambda: webbrowser.open(url)).start()
 
     app.secret_key = 'super secret key'
     app.run(port=port)

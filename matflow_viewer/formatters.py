@@ -18,54 +18,55 @@ def format_task_resources(task):
     return res_use
 
 
-def get_task_arguments(task):
-    cg_fmt = task.get_formatted_commands()[0]
+def get_task_arguments(task_parameters):
+    # cg_fmt = task.get_formatted_commands()[0]
     formatted_parameters = {
         'inputs': {},
         'outputs': {},
         'files': {},
     }
 
-    for element in task.elements:
+    for element in task_parameters:
 
-        for input_name, input_val in element.inputs.get_all().items():
+        for input_name, input_val in element['inputs'].items():
             if input_name.startswith('__file__'):
                 input_name = input_name.split('__file__')[1]
                 if input_name not in formatted_parameters['files']:
                     formatted_parameters['files'][input_name] = []
                 formatted_parameters['files'][input_name].append({
                     'url_name': input_name.replace('.', '_'),
-                    'value': input_val,
+                    'value': input_val[0],
                 })
             else:
                 if input_name not in formatted_parameters['inputs']:
                     formatted_parameters['inputs'][input_name] = []
                 formatted_parameters['inputs'][input_name].append(
-                    format_parameter(input_val))
+                    format_parameter(input_val[0]))
 
-        for output_name, output_val in element.outputs.get_all().items():
+        for output_name, output_val in element['outputs'].items():
             if output_name.startswith('__file__'):
                 output_name = output_name.split('__file__')[1]
                 if output_name not in formatted_parameters['files']:
                     formatted_parameters['files'][output_name] = []
                 formatted_parameters['files'][output_name].append({
                     'url_name': output_name.replace('.', '_'),
-                    'value': output_val,
+                    'value': output_val[0],
                 })
             else:
                 if output_name not in formatted_parameters['outputs']:
                     formatted_parameters['outputs'][output_name] = []
                 formatted_parameters['outputs'][output_name].append(
-                    format_parameter(output_val))
+                    format_parameter(output_val[0]))
 
-        for file_name, file_val in element.files.get_all().items():
+        for file_name, file_val in element['files'].items():
             if file_name not in formatted_parameters['files']:
                 formatted_parameters['files'][file_name] = []
             formatted_parameters['files'][file_name].append({
                 'url_name': file_name.replace('.', '_'),
-                'value': file_val,
+                'value': file_val[0],
             })
 
+    cg_fmt = [{'line': '<command here>'}]
     out = {
         'commands': cg_fmt,
         'formatted_parameters': formatted_parameters,
@@ -91,6 +92,9 @@ def format_parameter(param):
     elif isinstance(param, np.ndarray):
         if param.ndim == 1:
             param = param[:, None]
+        if param.shape[0] > 1000:
+            param = param[:1000]
+            # print('truncating...')
         if param.dtype.kind in {'U', 'S'}:
             fmt_spec = '{:}'
         else:

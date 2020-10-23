@@ -269,7 +269,8 @@ div.cmd {
 
 .task-wrapper.task-active .task-brief-info,
 .fig-wrapper.task-active .task-brief-info {
-    border: 1px solid gray;
+    border: 1px solid gray;    
+    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.51);
 }
 .task-wrapper:first-child,
 .fig-wrapper:first-child {
@@ -302,10 +303,12 @@ div.cmd {
 .task-inspector {
     /* border: 1px solid green;    */
 }
+
 .task-inspector-wrapper {
-    /* border: 1px solid green;    */
     padding: 1em 2em;
     position: relative;
+    background-color: #f7f7f7;
+    border-left: 1rem solid #fff;     
 }
 #task-inspector-overlay.loading {
     position: absolute;
@@ -326,6 +329,14 @@ div.cmd {
     color: #666;
     text-decoration-color: #666;
     margin-bottom: 0.7em;
+}
+.task-inspector h3 {
+    /* border: 1px solid green; */
+    display:inline-block;
+    padding: 0.3rem;
+    border-radius: 0.2rem;
+    text-decoration: none;
+    /* background-color: silver; */
 }
 .fig-inspector {
     /* border: 1px solid green;    */
@@ -430,6 +441,28 @@ table.fig-spec td:first-child {
     color: #777;
 }
 
+
+table.param-table, table.ndarray {
+    border-collapse: collapse;
+}
+table.ndarray {
+    /* border: 1px solid blue; */
+}
+table.param-table td {
+    border: 1px solid gray;
+    padding: 0;
+    margin: 0;
+}
+table.param-table td.param-prop-name-cell,
+table.param-table td.param-prop-val-cell {
+    padding: 0.5rem;
+}
+table.ndarray td {
+    padding: 0.3rem;
+    text-align: right;
+    font-family: monospace;
+}
+
 .loader {
     margin: 100px auto;
     font-size: 8px;
@@ -523,7 +556,7 @@ table.fig-spec td:first-child {
 
     .task-inspector-wrapper {
         overflow-x: auto;
-        flex-grow: 1;
+        flex-grow: 1;       
     }
     .fig-inspector-wrapper {
         overflow-x: auto;

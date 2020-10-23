@@ -9,8 +9,8 @@
     <div class="task-row">
         <div id="task-list-wrapper">
             <div id="task-list-wrapper-label">Task List</div>
-            {% for task_i in workflow.tasks %}
-            {% if task.task_idx == task_i.task_idx %}
+            {% for task_i in tasks_info %}
+            {% if task_idx == task_i.task_idx %}
             {% set task_active_class = 'task-active' %}
             {% else %}
             {% set task_active_class = '' %}
@@ -19,17 +19,17 @@
                 <div class="task-brief-info">
                     <div><span class="task-brief-info-name">{{ task_i.name_friendly }}</span></div>
                     <div class="task-brief-info-item"><span
-                            class="task-brief-info-label">Method:</span>{{ task_i.schema.method }}</div>
+                            class="task-brief-info-label">Method:</span>{{ task_i.schema_method }}</div>
                     <div class="task-brief-info-item"><span
-                            class="task-brief-info-label">Software:</span>{{ task_i.schema.implementation }}</div>
+                            class="task-brief-info-label">Software:</span>{{ task_i.schema_implementation }}</div>
                 </div>
             </div>
             {% endfor %}
         </div>
         <div class="task-inspector-wrapper">
             <div id="task-inspector-overlay"></div>
-            <div class="task-inspector" data-original-task-idx="{{ task.task_idx }}"
-                data-original-workflow-id="{{ id }}" data-original-element-idx="{{ element_idx }}">
+            <div class="task-inspector" data-original-task-idx="{{ task_idx }}" data-original-workflow-id="{{ id }}"
+                data-original-element-idx="{{ element_idx }}">
                 {% include 'task_full.html' %}
             </div>
         </div>

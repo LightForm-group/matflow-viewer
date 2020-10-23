@@ -1,8 +1,10 @@
 import os
 import random
+import time
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from matflow.api import load_workflow
+from matflow.models.workflow import Workflow
 from matflow.utils import get_workflow_paths, order_workflow_paths_by_date
 from sqlitedict import SqliteDict
 import numpy as np
@@ -53,7 +55,8 @@ def index():
 def find_local_workflows():
     if request.method == 'POST':
         base_path = request.json['basePath']
-        local_workflows = get_workflow_paths(base_path)
+        local_workflows = get_workflow_paths(base_path, quiet=False)
+        # print(local_workflows)
         local_workflows = order_workflow_paths_by_date(local_workflows)[::-1]
         with SqliteDict(DB_PATH, autocommit=True) as dict_DB:
             wkflow_ids = {}
@@ -103,10 +106,14 @@ def get_local_workflow():
 
 
 def find_workflow(id):
+    return load_workflow(find_workflow_path(id), full_path=True)
+
+
+def find_workflow_path(id):
     with SqliteDict(DB_PATH) as dict_DB:
         wk_data = dict_DB['workflow_IDs'][id]
         wk_path = wk_data['full_path']
-    return load_workflow(wk_path, full_path=True)
+        return wk_path
 
 
 @app.route('/workflow/<id>/profile')
@@ -129,19 +136,35 @@ def workflow_info(id):
 @app.route('/workflow/<id>/task/<int:task_idx>/element/<element_idx>/file/<active_file_name>/')
 def workflow_tasks(id, task_idx=0, element_idx=0, active_input_name=None,
                    active_output_name=None, active_file_name=None):
-    wk = find_workflow(id=id)
-    task = wk.tasks[task_idx]
+    wk_path = find_workflow_path(id)
+    elem_data_map = Workflow.get_element_data_map(wk_path)[task_idx]
+    task_parameters = [
+        Workflow.get_all_element_parameters(wk_path, task_idx, elem_idx)
+        for elem_idx, _ in enumerate(elem_data_map)
+    ]
+    schema_info = Workflow.get_schema_info(wk_path, task_idx)
+    num_elements = len(elem_data_map)
+    task_name = Workflow.get_task_name_friendly(wk_path, task_idx)
+    tasks_info = Workflow.get_workflow_tasks_info(wk_path)
+    workflow_name = 'workflow name'
+    workflow_loaded_path = 'workflow loaded path'
+
     page = render_template(
         'workflow_tasks.html',
         id=id,
-        workflow=wk,
-        task=task,
+        workflow_name=workflow_name,
+        workflow_loaded_path=workflow_loaded_path,
+        task_idx=task_idx,
+        tasks_info=tasks_info,
+        task_name=task_name,
+        schema_info=schema_info,
+        num_elements=num_elements,
         element_idx=int(element_idx),
         active_input_name=active_input_name,
         active_output_name=active_output_name,
         active_file_name=active_file_name,
-        **get_task_arguments(task),
-        resource_use=format_task_resources(task),
+        **get_task_arguments(task_parameters),
+        # resource_use=format_task_resources(task),
     )
     return page
 
@@ -181,19 +204,70 @@ def get_full_task():
     task_idx = int(request.form['taskIdx'])
     wid = request.form['workflowID']
     element_idx = int(request.form['elementIdx'])
-    wk = find_workflow(id=wid)
-    task = wk.tasks[task_idx]
 
+    # t0 = time.perf_counter()
+    # wk = find_workflow(id=wid)
+    # t1 = time.perf_counter()
+
+    # print(f'task_idx: {task_idx}')
+    wk_path = find_workflow_path(wid)
+    elem_data_map = Workflow.get_element_data_map(wk_path)[task_idx]
+    # print(f'elem_data_map: {elem_data_map}')
+    task_parameters = [
+        Workflow.get_all_element_parameters(wk_path, task_idx, elem_idx)
+        for elem_idx, _ in enumerate(elem_data_map)
+    ]
+    # print(f'task_parameters: {task_parameters}')
+
+    # TO send:
+    # - task_idx
+    # - num_elements
+    # - task.schema.outputs (list of str)
+    # - task.schema.input_aliases (list of str)
+    # - task.schema.input_map (list of dict with keys: file, inputs)
+    # - task.schema.output_map (list of dict with keys: files, output)
+
+    schema_info = Workflow.get_schema_info(wk_path, task_idx)
+    num_elements = len(elem_data_map)
+    task_name = Workflow.get_task_name_friendly(wk_path, task_idx)
+
+    # task = wk.tasks[task_idx]
     page = render_template(
         'task_full.html',
         id=wid,
-        workflow=wk,
-        task=task,
+        task_idx=task_idx,
+        task_name=task_name,
+        num_elements=num_elements,
         element_idx=element_idx,
-        **get_task_arguments(task),
-        resource_use=format_task_resources(task),
+        schema_info=schema_info,
+        **get_task_arguments(task_parameters),
+        # resource_use=format_task_resources(task),
     )
+    # t2 = time.perf_counter()
+
+    # print(f'time to find workflow: {t1-t0:0.4f}.')
+    # print(f'time to render template: {t2-t1:0.4f}.')
     return page
+
+
+@app.route('/get_task_element_data/<wid>/<int:task_idx>/<int:element_idx>', methods=['GET'])
+def get_task_element_data(wid, task_idx, element_idx):
+    wk_path = find_workflow_path(wid)
+    all_params = Workflow.get_all_element_parameters(
+        wk_path,
+        task_idx,
+        element_idx,
+        convert_numpy=True
+    )
+    return all_params
+
+
+@app.route('/get_task_parameter_data/<wid>/<int:task_idx>', methods=['GET'])
+def get_task_parameter_data(wid, task_idx):
+    wk_path = find_workflow_path(wid)
+    all_params = Workflow.get_task_parameter_data(wk_path, task_idx, convert_numpy=True)
+    all_params = Workflow.swap_task_parameter_data_indexing(all_params)
+    return jsonify(all_params)
 
 
 @app.route('/get_full_figure', methods=['POST'])
@@ -231,9 +305,9 @@ def get_task():
     task = wk.tasks[task_idx]
     cg_fmt = task.schema.command_group.get_formatted_commands([])[0]
 
-    print('wk: {}'.format(wk))
-    print('task: {}'.format(task))
-    print('cg_fmt: {}'.format(cg_fmt))
+    # print('wk: {}'.format(wk))
+    # print('task: {}'.format(task))
+    # print('cg_fmt: {}'.format(cg_fmt))
 
     page = render_template(
         'task.html',
